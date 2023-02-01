@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useReducer, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 import ErrorModal from "../UI/ErrorModal";
 
 import IngredientForm from "./IngredientForm";
@@ -71,7 +77,7 @@ function Ingredients() {
   }, []);
 */
 
-  const addIngredienthandler = async (ingredient) => {
+  const addIngredienthandler = useCallback(async (ingredient) => {
     //setIsLoading(true);
 
     dispatchHttpState({ type: "SEND" });
@@ -95,9 +101,9 @@ function Ingredients() {
       { id: body.name, ...ingredient },
     ]);
     */
-  };
+  }, []);
 
-  const removeIngredienthandler = async (ingredientId) => {
+  const removeIngredienthandler = useCallback(async (ingredientId) => {
     dispatchHttpState({ type: "SEND" });
 
     const response = await fetch(
@@ -117,16 +123,33 @@ function Ingredients() {
       prevState.filter((ing) => ing.id !== ingredientId)
     );
     */
-  };
+  }, []);
 
   const filterIngredientsHandler = useCallback((filteredIngredients) => {
     //setIngredients(filteredIngredients);
     dispatch({ type: "SET", ingredients: filteredIngredients });
   }, []);
 
-  const clearError = () => {
+  const clearError = useCallback(() => {
     dispatchHttpState({ type: "CLEAR" });
-  };
+  }, []);
+
+  /*
+
+  In alternativa a React.memo da applicare al componenente IngredientList si puo usare useMemo() che puo essere utiizzato
+  per memoizzare qualsiasi oggetto javascript:
+
+  
+  const ingredientList = useMemo(() => {
+    return (
+      <IngredientList
+        ingredients={userIngredients}
+        onRemoveItem={removeIngredienthandler}
+      ></IngredientList>
+    );
+  }, [userIngredients, removeIngredienthandler]);
+
+*/
   return (
     <div className="App">
       {httpState.error && (

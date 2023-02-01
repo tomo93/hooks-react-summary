@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import useHttp from "../../hooks/http";
 
 import Card from "../UI/Card";
+import ErrorModal from "../UI/ErrorModal";
 import "./Search.css";
 
 const Search = React.memo((props) => {
@@ -9,6 +11,8 @@ const Search = React.memo((props) => {
 
   const inputRef = useRef();
 
+  const { isLoading, error, data, sendRequest, clear } = useHttp();
+
   useEffect(() => {
     async function fetchIngredients() {
       if (enteredFilter === inputRef.current.value) {
@@ -16,24 +20,12 @@ const Search = React.memo((props) => {
           enteredFilter.length === 0
             ? ""
             : `?orderBy="title"&equalTo="${enteredFilter}"`;
-        const response = await fetch(
+
+        sendRequest(
           "https://react-hooks-summary-f9dbb-default-rtdb.firebaseio.com/ingredients.json" +
-            query
+            query,
+          "GET"
         );
-
-        const data = await response.json();
-
-        const loadedIngredients = [];
-
-        for (const key in data) {
-          loadedIngredients.push({
-            id: key,
-            title: data[key].title,
-            amount: data[key].amount,
-          });
-        }
-
-        onLoadIngredients(loadedIngredients);
       }
     }
 
@@ -42,13 +34,30 @@ const Search = React.memo((props) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [enteredFilter, onLoadIngredients]);
+  }, [enteredFilter, inputRef, sendRequest]);
 
+  useEffect(() => {
+    if (!isLoading && !error && data) {
+      const loadedIngredients = [];
+
+      for (const key in data) {
+        loadedIngredients.push({
+          id: key,
+          title: data[key].title,
+          amount: data[key].amount,
+        });
+      }
+
+      onLoadIngredients(loadedIngredients);
+    }
+  }, [data, isLoading, error, onLoadIngredients]);
   return (
     <section className="search">
+      {error && <ErrorModal onClose={clear}>{error}</ErrorModal>}
       <Card>
         <div className="search-input">
           <label>Filter by Title</label>
+          {isLoading && <span>Is Loading</span>}
           <input
             ref={inputRef}
             type="text"
